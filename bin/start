@@ -44,23 +44,6 @@ case "$SENSU_SERVICE" in
     process_template $CHECK_DIR
     process_template $HANDLERS_DIR
 
-    for INDEX in $DEPENDENCIES
-    do
-      envtpl -in /etc/sensu/templates/${INDEX}.json.tmpl > $CONFIG_DIR/${INDEX}.json
-    done
-
-    # Generate key/cert files if RABBITMQ_SSL_SUPPORT = true
-    if [ $RABBITMQ_SSL_SUPPORT == "true" ]; then
-      if [ -z "${RABBITMQ_SSL_CERT}" ] || [ -z "${RABBITMQ_SSL_KEY}" ]; then
-        echo 'RABBITMQ_SSL_SUPPORT = true but RABBITMQ_SSL_CERT or RABBITMQ_SSL_KEY is empty'
-        exit 1
-      fi
-
-      mkdir -p /etc/sensu/ssl
-      echo -e "${RABBITMQ_SSL_CERT}" > /etc/sensu/ssl/cert.pem
-      echo -e "${RABBITMQ_SSL_KEY}" > /etc/sensu/ssl/key.pem
-    fi
-
     # use host (not container) dirs for checks and metrics
     if compgen -G "/opt/sensu/embedded/bin/*.rb" > /dev/null; then
       sed -i "s|/dev|$HOST_DEV_DIR|g" /opt/sensu/embedded/bin/*.rb
@@ -75,9 +58,9 @@ case "$SENSU_SERVICE" in
       rm ${yamlFile} > /dev/null
     done
 
-    if [[ "${VALIDATE_ONLY}" == "true" ]]; then
+    # if [[ "${VALIDATE_ONLY}" == "true" ]]; then
       OPTIONS="${OPTIONS} --print_config --validate_config"
-    fi
+    # fi
 
     exec sensu-$SENSU_SERVICE -d $DIRS -e $EXTENSION_DIR -L $LOG_LEVEL $OPTIONS
     ;;
